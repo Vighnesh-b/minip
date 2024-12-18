@@ -8,10 +8,27 @@ import re
 import pandas as pd
 import os
 from torch import nn
+from flask import send_from_directory
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+@app.route('/get_csv', methods=['GET'])
+def get_csv():
+    try:
+        file = request.args.get('file', '')
+        if file not in ['reviews.csv', 'reviews_with_predictions.csv']:
+            return jsonify({"error": "Invalid file requested"}), 400
+
+        directory = './'  # Directory containing the CSV files
+        return send_from_directory(directory, file, as_attachment=False)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 # Helper function to remove emojis
 def remove_emojis(text):

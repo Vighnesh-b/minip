@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import "./App.css";
 import Papa from "papaparse";
 
+// Use the base URL from environment variables
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+
 function App() {
   const [reviews, setReviews] = useState([]);
   const [productUrl, setProductUrl] = useState("");
@@ -12,15 +15,15 @@ function App() {
   // Function to load reviews
   const loadReviews = async (csvFile) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/get_csv?file=${csvFile}`);
+      const response = await fetch(`${BASE_URL}/get_csv?file=${csvFile}`);
       const data = await response.text();
-  
+
       // Parse the CSV using PapaParse
       const parsedData = Papa.parse(data, {
         header: true,
         skipEmptyLines: true,
       });
-  
+
       const reviews = parsedData.data.map((row) => ({
         title: row["Review Title"]?.trim(),
         text: row["Review Text"]?.trim(),
@@ -28,7 +31,7 @@ function App() {
         verified: row["Verified Purchase"]?.trim(),
         prediction: row["Prediction"]?.trim() || "N/A",
       }));
-  
+
       setReviews(reviews);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -47,7 +50,7 @@ function App() {
       setError("");
       setLoadingScrape(true);
 
-      const response = await fetch("http://127.0.0.1:5000/scrape_reviews", {
+      const response = await fetch(`${BASE_URL}/scrape_reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: productUrl }),
@@ -75,7 +78,7 @@ function App() {
       setError("");
       setLoadingPredict(true);
 
-      const response = await fetch("http://127.0.0.1:5000/predict_reviews", {
+      const response = await fetch(`${BASE_URL}/predict_reviews`, {
         method: "POST",
       });
 
@@ -142,19 +145,25 @@ function App() {
               }}
             >
               <h3>{review.title}</h3>
-              <p><strong>Review:</strong> {review.text}</p>
-              <p><strong>Rating:</strong> {review.rating}</p>
+              <p>
+                <strong>Review:</strong> {review.text}
+              </p>
+              <p>
+                <strong>Rating:</strong> {review.rating}
+              </p>
               <p>
                 <strong>Verified Purchase:</strong>{" "}
                 {review.verified === "True" ? "Yes" : "No"}
               </p>
               <p>
                 <strong>Prediction:</strong>{" "}
-                {review.prediction === "real"
-                  ? <span style={{ color: "green" }}>Real</span>
-                  : review.prediction === "fake"
-                  ? <span style={{ color: "red" }}>Fake</span>
-                  : "N/A"}
+                {review.prediction === "real" ? (
+                  <span style={{ color: "green" }}>Real</span>
+                ) : review.prediction === "fake" ? (
+                  <span style={{ color: "red" }}>Fake</span>
+                ) : (
+                  "N/A"
+                )}
               </p>
             </div>
           ))
